@@ -5,3 +5,9 @@ dist-newstyle/
 tags
 /.direnv
 /result
+
+# etna-ify additions
+/etna.log
+/progress.jsonl
+/.hegel/
+/etna/dist-newstyle/

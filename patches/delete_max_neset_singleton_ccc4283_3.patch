@@ -1,0 +1,26 @@
+From ccc4283f48592efe47b41d2f44330cbadfa73e4d Mon Sep 17 00:00:00 2001
+From: Justin Le <justin@jle.im>
+Date: Wed, 25 Aug 2021 21:58:16 -0700
+Subject: [PATCH] fix functions on singleton containers (NESet.deleteMax)
+
+Hand-crafted slice of upstream commit ccc4283: NESet.deleteMax. Same
+pattern as NEMap — singleton case returned the singleton instead of empty.
+---
+ src/Data/Set/NonEmpty.hs | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/Data/Set/NonEmpty.hs b/src/Data/Set/NonEmpty.hs
+index aaaaaaa..bbbbbbb 100644
+--- a/src/Data/Set/NonEmpty.hs
++++ b/src/Data/Set/NonEmpty.hs
+@@ -991,7 +991,9 @@
+ -- > deleteMax (fromList (5 :| [3, 7])) == Data.Set.fromList [3, 5]
+ -- > deleteMax (singleton 5) == Data.Set.empty
+ deleteMax :: NESet a -> Set a
+-deleteMax (NESet x s) = insertMinSet x . S.deleteMax $ s
++deleteMax (NESet x s) = case S.maxView s of
++  Nothing -> S.empty
++  Just (_, s') -> insertMinSet x s'
+ {-# INLINE deleteMax #-}
+
+ -- | /O(1)/. Delete and find the minimal element.  It is constant-time, so

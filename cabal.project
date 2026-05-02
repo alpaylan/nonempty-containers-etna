@@ -1,0 +1,5 @@
+packages:
+  .
+  etna/
+
+with-compiler: ghc-9.6.6

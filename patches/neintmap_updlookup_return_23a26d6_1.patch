@@ -1,0 +1,31 @@
+From 23a26d6ebed7ea58cb76c73f5f4fc8d7ea3d960c Mon Sep 17 00:00:00 2001
+From: Justin Le <justin@jle.im>
+Date: Tue, 27 Nov 2018 17:53:06 -0800
+Subject: [PATCH] fix all tests (NEIntMap.updateLookupWithKey return value)
+
+Hand-crafted slice of upstream commit 23a26d6 against modern HEAD.
+
+The buggy `updateLookupWithKey` returned `f k0 v` in the EQ branch,
+which is the *post-update* value (`Just newValue` when the function
+returns `Just`, or `Nothing` if it deletes). The corrected behaviour
+matches `Data.Map`'s `updateLookupWithKey` semantic: always return
+`Just v` — the *original* value at the key — regardless of whether
+the function chose to update or delete the entry.
+---
+ src/Data/IntMap/NonEmpty.hs | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/src/Data/IntMap/NonEmpty.hs b/src/Data/IntMap/NonEmpty.hs
+index aaaaaaa..bbbbbbb 100644
+--- a/src/Data/IntMap/NonEmpty.hs
++++ b/src/Data/IntMap/NonEmpty.hs
+@@ -678,5 +678,7 @@
+ updateLookupWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
+   LT -> (Nothing, toMap n)
+-  EQ -> (f k0 v, maybe m (flip (insertMinMap k0) m) . f k0 $ v)
++  EQ ->
++    let u = f k0 v
++     in (Just v, maybe m (flip (insertMinMap k0) m) u)
+   GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
+ {-# INLINE updateLookupWithKey #-}
+

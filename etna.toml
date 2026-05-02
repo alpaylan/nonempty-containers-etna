@@ -1,0 +1,254 @@
+name = "nonempty-containers"
+description = "Non-empty variants of containers types (mstksg/nonempty-containers). Bug fixes mined from upstream history; modern HEAD is the base, each patch reverse-applies a fix to install the original bug."
+language = "haskell"
+strategies = ["quickcheck", "hedgehog", "falsify", "smallcheck"]
+crate = "nonempty-containers"
+base_commit = "001d6a890228f9dc852a912d1b2412b946e470e3"
+
+# ---------------------------------------------------------------------------
+# Variant 1: delete_max_nemap_singleton_ccc4283_1
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["delete_max_nemap_singleton_ccc4283_1"]
+
+[tasks.source]
+repo = "https://github.com/mstksg/nonempty-containers"
+commits = ["ccc4283f48592efe47b41d2f44330cbadfa73e4d"]
+commit_subjects = ["v0.3.4.3 fix functions on singleton containers (NEMap.deleteMax slice)"]
+origin = "internal"
+summary = "deleteMax was implemented as `insertMinMap k v . M.deleteMax`. On a singleton NEMap whose inner Map is empty, M.deleteMax is a no-op and the head (k,v) is re-inserted, so the result is the singleton itself instead of the empty Map. The fix uses M.maxView to detect the empty-inner case and short-circuits to M.empty."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Data/Map/NonEmpty.hs"]
+locations = [{ file = "src/Data/Map/NonEmpty.hs", line = 2228, symbol = "deleteMax" }]
+patch = "patches/delete_max_nemap_singleton_ccc4283_1.patch"
+
+[tasks.bug]
+short_name = "deleteMax_returns_singleton"
+invariant = "For any non-empty NEMap, NEMap.deleteMax must return a Map whose key-set is the original key-set minus the maximum key. In particular, deleteMax (singleton k v) must equal M.empty."
+how_triggered = "Reverse-applying the patch swaps the case-on-maxView definition for `insertMinMap k v . M.deleteMax`. Calling deleteMax on a singleton then yields M.singleton k v instead of M.empty."
+
+[[tasks.tasks]]
+property = "DeleteMaxNeMapKeysShrink"
+witnesses = [
+  { test_fn = "witness_delete_max_nemap_keys_shrink_case_singleton",  note = "deleteMax (singleton 5 'a') must equal M.empty" },
+  { test_fn = "witness_delete_max_nemap_keys_shrink_case_two_elem",   note = "deleteMax (fromList ((5,'a') :| [(3,'b')])) must equal M.singleton 3 'b'" },
+]
+
+# ---------------------------------------------------------------------------
+# Variant 2: delete_max_neintmap_singleton_ccc4283_2
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["delete_max_neintmap_singleton_ccc4283_2"]
+
+[tasks.source]
+repo = "https://github.com/mstksg/nonempty-containers"
+commits = ["ccc4283f48592efe47b41d2f44330cbadfa73e4d"]
+commit_subjects = ["v0.3.4.3 fix functions on singleton containers (NEIntMap.deleteMax slice)"]
+origin = "internal"
+summary = "Same bug shape as Variant 1, but in NEIntMap rather than NEMap. The buggy `insertMinMap k v . M.deleteMax` pattern returns the singleton instead of the empty IntMap when the inner IntMap is empty."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Data/IntMap/NonEmpty.hs"]
+locations = [{ file = "src/Data/IntMap/NonEmpty.hs", line = 1822, symbol = "deleteMax" }]
+patch = "patches/delete_max_neintmap_singleton_ccc4283_2.patch"
+
+[tasks.bug]
+short_name = "deleteMax_neintmap_returns_singleton"
+invariant = "For any non-empty NEIntMap, NEIntMap.deleteMax must return an IntMap whose key-set is the original key-set minus the maximum key. In particular, deleteMax (singleton k v) must equal IM.empty."
+how_triggered = "Reverse-applying the patch reintroduces the buggy insertMinMap-after-deleteMax pattern. deleteMax on a singleton then returns IM.singleton k v instead of IM.empty."
+
+[[tasks.tasks]]
+property = "DeleteMaxNeIntMapKeysShrink"
+witnesses = [
+  { test_fn = "witness_delete_max_neintmap_keys_shrink_case_singleton", note = "deleteMax (singleton 5 'a') must equal IM.empty" },
+  { test_fn = "witness_delete_max_neintmap_keys_shrink_case_two_elem",  note = "deleteMax (fromList ((5,'a') :| [(3,'b')])) must equal IM.singleton 3 'b'" },
+]
+
+# ---------------------------------------------------------------------------
+# Variant 3: delete_max_neset_singleton_ccc4283_3
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["delete_max_neset_singleton_ccc4283_3"]
+
+[tasks.source]
+repo = "https://github.com/mstksg/nonempty-containers"
+commits = ["ccc4283f48592efe47b41d2f44330cbadfa73e4d"]
+commit_subjects = ["v0.3.4.3 fix functions on singleton containers (NESet.deleteMax slice)"]
+origin = "internal"
+summary = "Set analogue of Variant 1. `insertMinSet x . S.deleteMax` returns the singleton when the inner Set is empty rather than S.empty."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Data/Set/NonEmpty.hs"]
+locations = [{ file = "src/Data/Set/NonEmpty.hs", line = 994, symbol = "deleteMax" }]
+patch = "patches/delete_max_neset_singleton_ccc4283_3.patch"
+
+[tasks.bug]
+short_name = "deleteMax_neset_returns_singleton"
+invariant = "For any non-empty NESet, NESet.deleteMax must return a Set whose elements are the originals minus the maximum. In particular, deleteMax (singleton x) must equal S.empty."
+how_triggered = "Reverse-applying the patch makes deleteMax (singleton x) yield S.singleton x instead of S.empty."
+
+[[tasks.tasks]]
+property = "DeleteMaxNeSetShrink"
+witnesses = [
+  { test_fn = "witness_delete_max_neset_shrink_case_singleton", note = "deleteMax (singleton 5) must equal S.empty" },
+  { test_fn = "witness_delete_max_neset_shrink_case_two_elem",  note = "deleteMax (fromList (5 :| [3])) must equal S.singleton 3" },
+]
+
+# ---------------------------------------------------------------------------
+# Variant 4: delete_max_neintset_singleton_ccc4283_4
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["delete_max_neintset_singleton_ccc4283_4"]
+
+[tasks.source]
+repo = "https://github.com/mstksg/nonempty-containers"
+commits = ["ccc4283f48592efe47b41d2f44330cbadfa73e4d"]
+commit_subjects = ["v0.3.4.3 fix functions on singleton containers (NEIntSet.deleteMax slice)"]
+origin = "internal"
+summary = "IntSet analogue of Variant 1."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Data/IntSet/NonEmpty.hs"]
+locations = [{ file = "src/Data/IntSet/NonEmpty.hs", line = 709, symbol = "deleteMax" }]
+patch = "patches/delete_max_neintset_singleton_ccc4283_4.patch"
+
+[tasks.bug]
+short_name = "deleteMax_neintset_returns_singleton"
+invariant = "For any non-empty NEIntSet, NEIntSet.deleteMax must return an IntSet whose elements are the originals minus the maximum. In particular, deleteMax (singleton x) must equal IS.empty."
+how_triggered = "Reverse-applying the patch makes deleteMax (singleton x) yield IS.singleton x instead of IS.empty."
+
+[[tasks.tasks]]
+property = "DeleteMaxNeIntSetShrink"
+witnesses = [
+  { test_fn = "witness_delete_max_neintset_shrink_case_singleton", note = "deleteMax (singleton 5) must equal IS.empty" },
+  { test_fn = "witness_delete_max_neintset_shrink_case_two_elem",  note = "deleteMax (fromList (5 :| [3])) must equal IS.singleton 3" },
+]
+
+# ---------------------------------------------------------------------------
+# Variant 5: neseq_intersperse_singleton_90ad8f2_1
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["neseq_intersperse_singleton_90ad8f2_1"]
+
+[tasks.source]
+repo = "https://github.com/mstksg/nonempty-containers"
+commits = ["90ad8f20e1dfeb164766825d8744e8cafea537a6"]
+commit_subjects = ["fix NESeq.intersperse"]
+origin = "internal"
+summary = "NESeq.intersperse on a singleton inserted a stray separator. The buggy form `intersperse z (x :<|| xs) = x :<|| (z Seq.<| Seq.intersperse z xs)` unconditionally cons'd the separator z. For a singleton (x :<|| Seq.Empty), it produced (x, z) instead of just (x). The fix case-splits on xs and only intersperses when xs is non-empty."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Data/Sequence/NonEmpty.hs"]
+locations = [{ file = "src/Data/Sequence/NonEmpty.hs", line = 957, symbol = "intersperse" }]
+patch = "patches/neseq_intersperse_singleton_90ad8f2_1.patch"
+
+[tasks.bug]
+short_name = "intersperse_inserts_stray_separator_on_singleton"
+invariant = "intersperse z (singleton x) must equal singleton x. More generally, intersperse must produce a sequence of length 2*n - 1 for input length n, never 2*n."
+how_triggered = "Reverse-applying the patch makes intersperse z (singleton x) produce a length-2 NESeq (x, z) instead of length-1 (x)."
+
+[[tasks.tasks]]
+property = "IntersperseLengthInvariant"
+witnesses = [
+  { test_fn = "witness_intersperse_length_invariant_case_singleton", note = "intersperse 0 (singleton 5) must have length 1" },
+  { test_fn = "witness_intersperse_length_invariant_case_two_elem",  note = "intersperse 0 (fromList (5 :| [7])) must have length 3" },
+]
+
+# ---------------------------------------------------------------------------
+# Variant 6: nemap_split_gt_9d516da_1
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["nemap_split_gt_9d516da_1"]
+
+[tasks.source]
+repo = "https://github.com/mstksg/nonempty-containers"
+commits = ["9d516da493bb02edfefc66fba03b2736f19b50ab"]
+commit_subjects = ["fix the bugs! (NEMap.split GT branch slice)"]
+origin = "internal"
+summary = "In the GT branch of NEMap.split (k > k0), when M.split's right side is empty but the left side is non-empty, the buggy code returned the entire input NEMap (`This n`). The corrected behaviour rebuilds just the left side from m1 with the original head re-inserted at the minimum position."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Data/Map/NonEmpty.hs"]
+locations = [{ file = "src/Data/Map/NonEmpty.hs", line = 1901, symbol = "split" }]
+patch = "patches/nemap_split_gt_9d516da_1.patch"
+
+[tasks.bug]
+short_name = "split_gt_returns_unsplit_map"
+invariant = "For any NEMap n and key k strictly larger than every key in n, split k n must return Just (This (NEMap with head k0 and original tail keys < k))."
+how_triggered = "Reverse-applying the patch makes split k n in the (Just _, Nothing) case yield `This n` instead of `This (insertMapMin k0 v m1)`. The two values can differ when M.split removes a maximal-key entry equal to or greater than the upper neighbours that the original map had."
+
+[[tasks.tasks]]
+property = "SplitLeftPartitionAtUpperBound"
+witnesses = [
+  { test_fn = "witness_split_left_partition_at_upper_bound_case_three", note = "split 100 (fromList ((5,'a') :| [(3,'b'), (7,'c')])) must keep all 3 entries on the left side" },
+  { test_fn = "witness_split_left_partition_at_upper_bound_case_two",   note = "split 50 (fromList ((5,'a') :| [(3,'b')])) must keep both entries on the left" },
+]
+
+# ---------------------------------------------------------------------------
+# Variant 7: nemap_issubmap_swap_967de8b_1
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["nemap_issubmap_swap_967de8b_1"]
+
+[tasks.source]
+repo = "https://github.com/mstksg/nonempty-containers"
+commits = ["967de8bd14a008fe155152b8a8d596680a3196d6"]
+commit_subjects = ["fixed all stability errors exposed by tests! (NEMap.isSubmapOfBy slice)"]
+origin = "internal"
+summary = "isSubmapOfBy was destructuring the wrong argument: it kept the first as a Map (toMap) and pulled the head off the second (NEMap k v m1). The lookup probed the wrong map, the M.isSubmapOfBy call ran with arguments swapped, and the f-comparison ran with operands flipped. Net effect: the function tested the inverse relation."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Data/Map/NonEmpty.hs"]
+locations = [{ file = "src/Data/Map/NonEmpty.hs", line = 1982, symbol = "isSubmapOfBy" }]
+patch = "patches/nemap_issubmap_swap_967de8b_1.patch"
+
+[tasks.bug]
+short_name = "isSubmapOfBy_argument_order_swapped"
+invariant = "For any NEMap a, isSubmapOfBy (==) a a must be True (every map is a submap of itself). Additionally, if a's head key is not in b's keys, isSubmapOfBy (==) a b must be False."
+how_triggered = "Reverse-applying the patch reintroduces the swapped operand pattern. isSubmapOfBy (==) (singleton 1 'a') (singleton 2 'b') yields True (incorrect — head 1 is not in the second map's keys) and isSubmapOfBy (==) (singleton 1 'a') (singleton 1 'a') yields False (incorrect — anything is a submap of itself)."
+
+[[tasks.tasks]]
+property = "IsSubmapOfReflexiveAndKeyExists"
+witnesses = [
+  { test_fn = "witness_is_submap_of_reflexive_and_key_exists_case_self_singleton", note = "isSubmapOfBy (==) (singleton 1 'a') (singleton 1 'a') must equal True" },
+  { test_fn = "witness_is_submap_of_reflexive_and_key_exists_case_disjoint_keys",  note = "isSubmapOfBy (==) (singleton 1 'a') (singleton 2 'b') must equal False" },
+]
+
+# ---------------------------------------------------------------------------
+# Variant 8: neintmap_updlookup_return_23a26d6_1
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["neintmap_updlookup_return_23a26d6_1"]
+
+[tasks.source]
+repo = "https://github.com/mstksg/nonempty-containers"
+commits = ["23a26d6ebed7ea58cb76c73f5f4fc8d7ea3d960c"]
+commit_subjects = ["fix all tests (NEIntMap.updateLookupWithKey return value slice)"]
+origin = "internal"
+summary = "NEIntMap.updateLookupWithKey in the EQ branch returned `f k0 v` (the post-update value, i.e. Nothing if f deletes or Just newValue otherwise). The Data.Map convention is to return `Just v` — the *original* value at the key — regardless. The fix evaluates `f k0 v` once for the new map and returns `Just v` for the lookup component."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Data/IntMap/NonEmpty.hs"]
+locations = [{ file = "src/Data/IntMap/NonEmpty.hs", line = 680, symbol = "updateLookupWithKey" }]
+patch = "patches/neintmap_updlookup_return_23a26d6_1.patch"
+
+[tasks.bug]
+short_name = "updateLookupWithKey_returns_post_update_value"
+invariant = "For any NEIntMap n with k present, updateLookupWithKey f k n must return (Just v_original, _) where v_original is n's value at k, irrespective of what f returns."
+how_triggered = "Reverse-applying the patch makes updateLookupWithKey return `f k0 v` for the lookup slot — Nothing when f decides to delete, or `Just (newValue)` when f decides to update — instead of the original `Just v`."
+
+[[tasks.tasks]]
+property = "UpdateLookupReturnsOriginal"
+witnesses = [
+  { test_fn = "witness_update_lookup_returns_original_case_delete", note = "updateLookupWithKey (\\_ _ -> Nothing) 5 (singleton 5 'a') must yield (Just 'a', _) — original value, not Nothing" },
+  { test_fn = "witness_update_lookup_returns_original_case_update", note = "updateLookupWithKey (\\_ _ -> Just 'z') 5 (singleton 5 'a') must yield (Just 'a', _) — original 'a', not updated 'z'" },
+]

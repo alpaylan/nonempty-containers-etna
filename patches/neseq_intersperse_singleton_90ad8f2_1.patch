@@ -1,0 +1,27 @@
+From 90ad8f20e1dfeb164766825d8744e8cafea537a6 Mon Sep 17 00:00:00 2001
+From: Jon Shen <shenjonathan0@gmail.com>
+Date: Thu, 18 Feb 2021 00:23:00 -0500
+Subject: [PATCH] fix NESeq.intersperse
+
+---
+ src/Data/Sequence/NonEmpty.hs | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/Data/Sequence/NonEmpty.hs b/src/Data/Sequence/NonEmpty.hs
+index bbb3077..3fc3eb9 100644
+--- a/src/Data/Sequence/NonEmpty.hs
++++ b/src/Data/Sequence/NonEmpty.hs
+@@ -957,7 +957,9 @@ mapReverse f (x :<|| xs) = fmap f (Seq.reverse xs) :||> f x
+ -- intersperse a (fromList [x,y,z]) = fromList [x,a,y,a,z]
+ -- @
+ intersperse :: a -> NESeq a -> NESeq a
+-intersperse z (x :<|| xs) = x :<|| (z Seq.<| Seq.intersperse z xs)
++intersperse z nes@(x :<|| xs) = case xs of
++  _ Seq.:<| _ -> x :<|| (z Seq.<| Seq.intersperse z xs)
++  Seq.Empty -> nes
+ {-# INLINE intersperse #-}
+ 
+ -- | \( O(\min(n_1,n_2,n_3)) \).  'zip3' takes three sequences and returns a
+-- 
+2.37.1 (Apple Git-137.1)
+
