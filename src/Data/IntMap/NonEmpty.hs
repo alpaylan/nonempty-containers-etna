@@ -677,9 +677,7 @@ updateLookupWithKey ::
   (Maybe a, IntMap a)
 updateLookupWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
   LT -> (Nothing, toMap n)
-  EQ ->
-    let u = f k0 v
-     in (Just v, maybe m (flip (insertMinMap k0) m) u)
+  EQ -> (f k0 v, maybe m (flip (insertMinMap k0) m) . f k0 $ v)
   GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
 {-# INLINE updateLookupWithKey #-}
 

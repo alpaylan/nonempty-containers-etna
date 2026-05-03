@@ -1,34 +1,13 @@
-From 9d516da493bb02edfefc66fba03b2736f19b50ab Mon Sep 17 00:00:00 2001
-From: Justin Le <justin@jle.im>
-Date: Tue, 20 Nov 2018 23:59:02 -0800
-Subject: [PATCH] fix the bugs! (NEMap.split GT branch)
-
-Hand-crafted slice of upstream commit 9d516da against modern HEAD.
-
-In the GT branch of NEMap.split, when the right side of M.split is empty
-but the left side is non-empty, the buggy code returned the entire input
-NEMap (`This n`) — meaning split lost no entries even though `k` was
-greater than every key in the map. The fix returns just the left side
-with the original head re-inserted.
-
-Witness: `split 6 (fromList ((5,"a") :| [(3,"b")]))` must equal
-`Just (This (fromList ((3,"b") :| [(5,"a")])))`. The buggy form returned
-the same NEMap structurally but distinguishable by element identity is
-hard to test, so the witness uses 4 elements where re-insertion order
-flips the head's position to make the result observably different.
----
- src/Data/Map/NonEmpty.hs | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
 diff --git a/src/Data/Map/NonEmpty.hs b/src/Data/Map/NonEmpty.hs
-index aaaaaaa..bbbbbbb 100644
+index b848d61..8bb57f5 100644
 --- a/src/Data/Map/NonEmpty.hs
 +++ b/src/Data/Map/NonEmpty.hs
-@@ -1899,6 +1899,6 @@
+@@ -1898,7 +1898,7 @@ split k n@(NEMap k0 v m0) = case compare k k0 of
+   EQ -> That <$> nonEmptyMap m0
    GT -> Just $ case (nonEmptyMap m1, nonEmptyMap m2) of
      (Nothing, Nothing) -> This (singleton k0 v)
--    (Just _, Nothing) -> This n
-+    (Just _, Nothing) -> This (insertMapMin k0 v m1)
+-    (Just _, Nothing) -> This (insertMapMin k0 v m1)
++    (Just _, Nothing) -> This n
      (Nothing, Just n2) -> These (singleton k0 v) n2
      (Just _, Just n2) -> These (insertMapMin k0 v m1) n2
    where

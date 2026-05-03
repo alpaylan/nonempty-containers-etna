@@ -1,38 +1,20 @@
-From 967de8bd14a008fe155152b8a8d596680a3196d6 Mon Sep 17 00:00:00 2001
-From: Justin Le <justin@jle.im>
-Date: Sun, 25 Nov 2018 21:09:07 -0800
-Subject: [PATCH] fix all stability errors (NEMap.isSubmapOfBy operands swapped)
-
-Hand-crafted slice of upstream commit 967de8b against modern HEAD.
-
-The buggy `isSubmapOfBy` destructured the wrong argument: it kept the
-first argument as a Map (`toMap -> m0`) and pulled the head off the
-second argument (`NEMap k v m1`). The lookup then probed the FIRST map
-for the SECOND map's head, and the f-comparison ran with operands in
-the wrong order. Net effect: it tests whether the SECOND argument's
-non-head part is a submap of the FIRST, which is the inverse relation.
----
- src/Data/Map/NonEmpty.hs | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
 diff --git a/src/Data/Map/NonEmpty.hs b/src/Data/Map/NonEmpty.hs
-index aaaaaaa..bbbbbbb 100644
+index b848d61..38ec7ae 100644
 --- a/src/Data/Map/NonEmpty.hs
 +++ b/src/Data/Map/NonEmpty.hs
-@@ -1979,12 +1979,12 @@
-   (a -> b -> Bool) ->
+@@ -1979,12 +1979,12 @@ isSubmapOfBy ::
    NEMap k a ->
    NEMap k b ->
    Bool
--isSubmapOfBy f (toMap -> m0) (NEMap k v m1) =
-+isSubmapOfBy f (NEMap k v m0) (toMap -> m1) =
+-isSubmapOfBy f (NEMap k v m0) (toMap -> m1) =
++isSubmapOfBy f (toMap -> m0) (NEMap k v m1) =
    kvSub
      && M.isSubmapOfBy f m0 m1
    where
--    kvSub = case M.lookup k m0 of
--      Just v0 -> f v0 v
-+    kvSub = case M.lookup k m1 of
-+      Just v0 -> f v v0
+-    kvSub = case M.lookup k m1 of
+-      Just v0 -> f v v0
++    kvSub = case M.lookup k m0 of
++      Just v0 -> f v0 v
        Nothing -> False
  {-# INLINE isSubmapOfBy #-}
-
+ 
