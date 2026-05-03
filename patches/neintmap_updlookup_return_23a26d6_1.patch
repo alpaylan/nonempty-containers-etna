@@ -1,15 +1,15 @@
 diff --git a/src/Data/IntMap/NonEmpty.hs b/src/Data/IntMap/NonEmpty.hs
-index 22bdd98..f6afc60 100644
+index f6afc60..22bdd98 100644
 --- a/src/Data/IntMap/NonEmpty.hs
 +++ b/src/Data/IntMap/NonEmpty.hs
-@@ -677,9 +677,7 @@ updateLookupWithKey ::
+@@ -677,7 +677,9 @@ updateLookupWithKey ::
    (Maybe a, IntMap a)
  updateLookupWithKey f k n@(NEIntMap k0 v m) = case compare k k0 of
    LT -> (Nothing, toMap n)
--  EQ ->
--    let u = f k0 v
--     in (Just v, maybe m (flip (insertMinMap k0) m) u)
-+  EQ -> (f k0 v, maybe m (flip (insertMinMap k0) m) . f k0 $ v)
+-  EQ -> (f k0 v, maybe m (flip (insertMinMap k0) m) . f k0 $ v)
++  EQ ->
++    let u = f k0 v
++     in (Just v, maybe m (flip (insertMinMap k0) m) u)
    GT -> fmap (insertMinMap k0 v) . M.updateLookupWithKey f k $ m
  {-# INLINE updateLookupWithKey #-}
  
